@@ -24,6 +24,8 @@ public class Card : MonoBehaviour
     Text _cardCostValue;
     [SerializeField]
     Image _cardHighlightImage;
+    [SerializeField]
+    int _playerHandIndex; // use this for player hand related funcs
 
     public bool isBlank = false;
 
@@ -40,6 +42,19 @@ public class Card : MonoBehaviour
         get
         {
             return _cardHighlightImage;
+        }
+    }
+
+    public int PlayerHandIndex
+    {
+        get
+        {
+            return _playerHandIndex;
+        }
+
+        set
+        {
+            _playerHandIndex = value;
         }
     }
 
@@ -60,6 +75,7 @@ public class Card : MonoBehaviour
         isBlank = true;
     }
 
+    
         // big TODO:
         // need to think about how to handle card attributes, like attack, debuffs, buffs etc.
         // dont use enums as that would become too much of a hassle to maintain

@@ -187,9 +187,16 @@ public class EncounterHandler : MonoBehaviour
 
     public void AddCardToComboPool(GameObject card)
     {
-        Debug.Log(card.GetComponent<Card>().CardInfo.CardName);
         _selectedCardsForCombination.Add(card);
-        Debug.Log(_selectedCardsForCombination[0].GetComponent<Card>().CardInfo.CardName);
+
+    }
+
+    public void EndCardCraftingPhase()
+    {
+        if(_selectedCardsForCombination.Count > 0)
+        {
+            _selectedCardsForCombination.Clear();
+        }
     }
 
     public void OnCombineCardsButtonPress()
@@ -202,8 +209,8 @@ public class EncounterHandler : MonoBehaviour
 
         if (_cardCreator != null)
         {
-            _cardCreator.CombineCards(_selectedCardsForCombination[0].GetComponent<Card>(), _selectedCardsForCombination[1].GetComponent<Card>());
-
+            var result = _cardCreator.CombineCards(_selectedCardsForCombination[0].GetComponent<Card>(), _selectedCardsForCombination[1].GetComponent<Card>());
+            Debug.Log(result.CardName);
         }
     }
     

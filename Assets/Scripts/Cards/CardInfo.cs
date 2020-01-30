@@ -25,9 +25,9 @@ public class CardInfo : ScriptableObject
     [SerializeField]
     private string _cardDescription;
 
-    [Tooltip("The ID link to this cards' attributes")]
+    [Tooltip("The cards' one half of a crafting ID, when combined with another valid card will create a new card")]
     [SerializeField]
-    private int _cardAttribID;
+    private int _cardCraftingID;
 
     public Sprite CardIcon
     {
@@ -61,11 +61,11 @@ public class CardInfo : ScriptableObject
         }
     }
 
-    public int CardAttribID
+    public int CardCraftingID
     {
         get
         {
-            return _cardAttribID;
+            return _cardCraftingID;
         }
     }
 

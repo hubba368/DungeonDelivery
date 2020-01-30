@@ -6,16 +6,38 @@ public class ComboCardCreator : MonoBehaviour
 {
     //use this class to combine action and item cards together
 
-    public void CombineCards(Card lhc, Card rhc)
+    public CardInfo CombineCards(Card lhc, Card rhc)
     {
-        if(lhc.CardInfo.CardType.CardTypeID == rhc.CardInfo.CardType.CardTypeID)
+        if (!CheckCraftingValidity(lhc, rhc))
         {
-            Debug.Log("Attempted to combine invalid cards");
-            return;
+            return null; 
         }
 
-        Debug.Log(lhc.CardInfo.CardName);
-        Debug.Log(rhc.CardInfo.CardName);
+        CardInfo result;
+
+        int resultantKey = lhc.CardInfo.CardCraftingID + rhc.CardInfo.CardCraftingID;
+
+        result = Root.GetComponentFromRoot<CardCraftingDatatable>().GetRecipeByKey(resultantKey);
+
+        return result;
+    }
+
+    private bool CheckCraftingValidity(Card lhc, Card rhc)
+    {
+        if (lhc.CardInfo.CardType.CardTypeID == rhc.CardInfo.CardType.CardTypeID)
+        {
+            Debug.Log("Attempted to combine invalid cards");
+            return false;
+        }
+        else if(lhc.CardInfo.CardType.GetTypeString() == "Combo" || rhc.CardInfo.CardType.GetTypeString() == "Combo")
+        {
+            Debug.Log("Can't combine an already combined card");
+            return false;
+        }
+        else
+        {
+            return true;
+        }
     }
 
 

@@ -85,6 +85,7 @@ public class PlayerHand : MonoBehaviour
             Debug.Log("Card Name: " + temp.GetComponent<Card>().CardInfo.CardName + "\n"
                 + "CardType: " + temp.GetComponent<Card>().CardInfo.CardType
                 + "Card Cost:" + temp.GetComponent<Card>().CardInfo.CardAttributes.BaseCardCost + "\n");
+            temp.GetComponent<Card>().PlayerHandIndex = slot;
         }
         else
         {
@@ -137,6 +138,16 @@ public class PlayerHand : MonoBehaviour
         return result;
     }
 
+    private void RemoveSingleCardFromHand(GameObject obj)
+    {
+        _currentHand.Remove(obj.GetComponent<Card>().PlayerHandIndex);
+    }
+
+    private void AddSingleCardToHand(GameObject obj)
+    {
+
+    }
+
     private void OnPressCard(bool isCardPressed, GameObject cardPanel)
     {
         if (isCardPressed)
@@ -144,9 +155,12 @@ public class PlayerHand : MonoBehaviour
             // get cardpanel that has been clicked on from currenthand
             if (_currentHand.ContainsValue(cardPanel))
             {
-                var temp = _currentHand.Values.Where(item => item == cardPanel);
-                _currentSelectedCard = temp.ElementAt(0); 
+                var slot = cardPanel.GetComponent<Card>().PlayerHandIndex;
+                var temp = _currentHand[slot];
+                _currentSelectedCard = temp;
+                //RemoveSingleCardFromHand(cardPanel);
             }
+            // remove selected card from the hand (and then return it if needed)
 
 
             if(cardPanel.GetComponent<CardPanel>().Card.CardInfo.CardType.GetTypeString() != "Combo")
@@ -179,7 +193,7 @@ public class PlayerHand : MonoBehaviour
         obj.GetComponent<Image>().color = color;
     }
 
-    public void MoveCardToNewArea()
+    public void MoveCardToHighlightArea()
     {
         if(_currentSelectedCard!= null)
         {
@@ -190,8 +204,13 @@ public class PlayerHand : MonoBehaviour
         
     }
 
-    public void MoveCardToOriginalPos()
+    public void EndCardCrafting()
     {
+        Root.GetComponentFromRoot<EncounterHandler>().EndCardCraftingPhase();
+    }
 
+    public void OnPressEndCardCrafting()
+    {
+        // add back the selected cards
     }
 }
