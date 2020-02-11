@@ -53,11 +53,10 @@ public class SelectionPanel : MonoBehaviour
                 _button5.GetComponentInChildren<Text>().text = "Skill";
                 _button6.GetComponentInChildren<Text>().text = "Flee";
 
-                //TODO fight handler
                 _button3.onClick.AddListener(()=> Root.GetComponentFromRoot<EncounterHandler>().StartCombatEncounter((BaseEnemy)Root.GetComponentFromRoot<UIHandler>().CurrentTargetThing));
                 _button4.onClick.AddListener(()=> Root.GetComponentFromRoot<UIHandler>().BuildDialoguePanel(Root.GetComponentFromRoot<UIHandler>().CurrentTargetThing));
                 _button5.onClick.AddListener(()=> Root.GetComponentFromRoot<UIHandler>().ShowSelectionPanel(UISelectionPanelType.Generic));
-                // TODO flee mechanic
+
                 //_button6.onClick.AddListener(_onButtonClickAction);
                 break;
             case UISelectionPanelType.Item:

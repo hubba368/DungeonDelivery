@@ -8,22 +8,44 @@ public class CardLogic : MonoBehaviour
 {
     // this class will handle a cards in game behaviour
     Card _cardInstance;
+    CardAttributes _cardAttributes;
+    BaseCardEffect _attachedCardEffect;
+
+    private void Start()
+    {
+        _cardInstance = this.GetComponent<Card>();
+        if (_cardInstance)
+        {
+            _cardAttributes = _cardInstance.CardInfo.CardAttributes;
+            _attachedCardEffect = _cardAttributes.BaseEffect;
+        }
+    }
 
     public void OnDestroyCard()
     {
         Destroy(this.gameObject);
     }
      
-    public void OnPressCard()
+    public void OnUseCard()
     {
-
+        if (_attachedCardEffect)
+        {
+            _attachedCardEffect.InitiateCardEffect();
+        }
     } 
+
+    public void OnCardStatsChange()
+    {
+        if(_cardAttributes == null)
+        {
+            throw new System.NullReferenceException("card has no attributes that can be changed.");
+            
+        }
+
+
+    }
     //TODO 
     //funcs we probably need:
-    // Combination of action and item card func
-    // will need to think about how to combine cards when added to the combo area
-    // some kind of card combinator class that takes the two cards when a button press
-    // then could either do lookup in a table or straight up randomised cards
 
     // 'use' card func
     // for action and item cards, this would simply add them to the combination area on the UI

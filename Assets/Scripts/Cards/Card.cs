@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -26,6 +27,8 @@ public class Card : MonoBehaviour
     Image _cardHighlightImage;
     [SerializeField]
     int _playerHandIndex; // use this for player hand related funcs
+
+    CardLogic _cardLogic; // the card specific logic it may have.
 
     public bool isBlank = false;
 
@@ -58,16 +61,39 @@ public class Card : MonoBehaviour
         }
     }
 
+    public CardLogic CardLogic
+    {
+        get
+        {
+            return _cardLogic;
+        }
+    }
+
     public void InitialiseCard(CardInfo info)
     {
+        // setup card graphics
         _cardInfo = info;
         _cardIcon.sprite = _cardInfo.CardIcon;
         _cardName.text = _cardInfo.CardName;
-        _cardDescription.text = _cardInfo.CardDescription;
-        _cardAttributes = _cardInfo.CardAttributes;
+        _cardDescription.text = _cardInfo.CardDescription;        
         _cardType = _cardInfo.CardType;
         _cardTypeText.text = _cardType.GetTypeString();
+
+        // setup card logic
+        _cardAttributes = _cardInfo.CardAttributes;
         _cardCostValue.text = _cardAttributes.BaseCardCost.ToString();
+        _cardType.OnInitCard();
+
+        try
+        {
+            _cardLogic = this.gameObject.GetComponent<CardLogic>();
+        }
+        catch(NullReferenceException e)
+        {
+            Debug.Log("card does not have accompanying logic. Adding class...");
+            var temp = this.gameObject.AddComponent<CardLogic>();
+            _cardLogic = temp;
+        }
     }
 
     public void CreateBlankCard()

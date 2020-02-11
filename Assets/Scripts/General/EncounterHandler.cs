@@ -21,13 +21,14 @@ public class EncounterHandler : MonoBehaviour
     GameObject _currentEncounterThing;
     [SerializeField]
     BaseEnemy _currentEnemyInCombat;
+    [SerializeField]
+    List<GameObject> _selectedCardsForCombination = new List<GameObject>();
 
     ComboCardCreator _cardCreator;
+    PlayerHand _playerCombatHand;
 
     bool _playerInCombat = false;
     bool _isPlayerTurn = false;
-
-    List<GameObject> _selectedCardsForCombination = new List<GameObject>();
 
     public UnityAction TestEndTurnAction;
     public UnityAction TestCombineCardAction;
@@ -82,6 +83,19 @@ public class EncounterHandler : MonoBehaviour
         _currentEncounterThing = Instantiate(obj, spawnPos, Quaternion.identity);
     }
 
+    public void StartDialogueEncounter(BaseCharacter thing)
+    {
+        Root.GetComponentFromRoot<UIHandler>().BuildDialoguePanel(thing);
+    }
+
+    public void EndEncounter()
+    {
+        _playerChar.HasEnteredEncounter = false;
+        _playerChar.UsingUI = false;
+        _playerChar.EncounteredThing = null;
+        Destroy(_currentEncounterThing);
+    }
+
     public void StartCombatEncounter(BaseEnemy enemy)
     {
         Debug.Log("starting Combat");
@@ -94,8 +108,9 @@ public class EncounterHandler : MonoBehaviour
 
         _playerInCombat = true;
         var hand = Root.GetComponentFromRoot<UIHandler>().CurrentActivePanel.GetComponent<PlayerHand>();
+        _playerCombatHand = hand;
         //StartCoroutine("PlayerCombatLoop", hand);
-        StartNewPlayerTurn(hand);
+        StartNewPlayerTurn(_playerCombatHand);
         
 
     }
@@ -137,22 +152,20 @@ public class EncounterHandler : MonoBehaviour
         PlayerEndTurn();
         _currentEnemyInCombat.CombatAI.InitiateMove();
         // TODO: each enemy type has its own moveset 
-        StartNewPlayerTurn(Root.GetComponentFromRoot<UIHandler>().CurrentActivePanel.GetComponent<PlayerHand>());
+        StartNewPlayerTurn(_playerCombatHand);
     }
 
     private void BeginEnemyStrategise(BaseEnemy enemy)
     {
         Debug.Log("enemy is thinking about hand");
         enemy.CombatAI.InitiateThink();
-        // TODO: enemy will check for card combos
     }
 
     private void PlayerEndTurn()
     {
-        // TODO: player will initiate any card usages onto the field
-        // also discard hand if any cards remain
         _isPlayerTurn = false;
-        Root.GetComponentFromRoot<UIHandler>().CurrentActivePanel.GetComponent<PlayerHand>().DiscardAllCardsFromHand();
+        PlayerDiscardHand();
+        QuitCardCraftingPhase();
         //BeginEnemyTurn();
 
     }
@@ -167,33 +180,25 @@ public class EncounterHandler : MonoBehaviour
         hand.DiscardCardFromHand(card);
     }
 
+    private void PlayerDiscardHand()
+    {
+        _playerCombatHand.DiscardAllCardsFromHand();
+    }
+
     private void PlayerGainMana(int amount)
     {
         _playerChar.IncrementPlayerMana(amount);
     }
 
-    public void StartDialogueEncounter(BaseCharacter thing)
-    {
-        Root.GetComponentFromRoot<UIHandler>().BuildDialoguePanel(thing);
-    }
-
-    public void EndEncounter()
-    {
-        _playerChar.HasEnteredEncounter = false;
-        _playerChar.UsingUI = false;
-        _playerChar.EncounteredThing = null;
-        Destroy(_currentEncounterThing);
-    }
-
     public void AddCardToComboPool(GameObject card)
     {
         _selectedCardsForCombination.Add(card);
-
     }
 
-    public void EndCardCraftingPhase()
+    public void QuitCardCraftingPhase()
     {
-        if(_selectedCardsForCombination.Count > 0)
+        _playerCombatHand.EndCardCrafting();
+        if (_selectedCardsForCombination.Count > 0)
         {
             _selectedCardsForCombination.Clear();
         }
@@ -209,8 +214,19 @@ public class EncounterHandler : MonoBehaviour
 
         if (_cardCreator != null)
         {
+            _selectedCardsForCombination = _playerCombatHand.GetCardFromCraftingArea();
+
             var result = _cardCreator.CombineCards(_selectedCardsForCombination[0].GetComponent<Card>(), _selectedCardsForCombination[1].GetComponent<Card>());
-            Debug.Log(result.CardName);
+
+            if(result != null)
+            {
+                _playerCombatHand.DiscardCardFromHand(_selectedCardsForCombination[0].GetComponent<Card>());
+                _playerCombatHand.DiscardCardFromHand(_selectedCardsForCombination[1].GetComponent<Card>());
+                Debug.Log(result.CardName);
+                _playerCombatHand.AddCraftedCardToHand(result);
+                QuitCardCraftingPhase();               
+            }
+
         }
     }
     

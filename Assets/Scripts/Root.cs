@@ -38,6 +38,7 @@ public class Root : MonoBehaviour
         DontDestroyOnLoad(this);
         Instance = this;
         GetPlayerChar();
+        Canvas.ForceUpdateCanvases();
     }
 
     private void GetPlayerChar()

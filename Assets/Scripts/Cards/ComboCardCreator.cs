@@ -27,6 +27,7 @@ public class ComboCardCreator : MonoBehaviour
         if (lhc.CardInfo.CardType.CardTypeID == rhc.CardInfo.CardType.CardTypeID)
         {
             Debug.Log("Attempted to combine invalid cards");
+            Debug.Log(lhc.CardInfo.CardType.CardTypeID + " " + rhc.CardInfo.CardType.CardTypeID);
             return false;
         }
         else if(lhc.CardInfo.CardType.GetTypeString() == "Combo" || rhc.CardInfo.CardType.GetTypeString() == "Combo")

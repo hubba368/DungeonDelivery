@@ -24,7 +24,6 @@ public class CardCraftingDatatable : MonoBehaviour
     public CardInfo GetRecipeByKey(int key)
     {
         CardInfo result = null;
-        Debug.Log(key);
         var temp = testCard;
         result = temp;
         /*if (_craftingTable.ContainsKey(key))

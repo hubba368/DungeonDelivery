@@ -16,6 +16,8 @@ public class CardPanel : MonoBehaviour
     
     private bool isBlank = false;
     private bool isCardPressedOn = false;
+    [SerializeField]
+    private Vector2 _panelOriginalPosition;
 
     public Card Card
     {
@@ -41,6 +43,14 @@ public class CardPanel : MonoBehaviour
         }
     }
 
+    public Vector2 PanelOriginalPosition
+    {
+        get
+        {
+            return _panelOriginalPosition;
+        }
+    }
+
     public event OnPressCardDelegate PressedCard;
 
     public void InitCardPanel()
@@ -48,6 +58,7 @@ public class CardPanel : MonoBehaviour
         _card = this.GetComponent<Card>();
         _cardLogic = this.GetComponent<CardLogic>();
         _animator = this.GetComponent<Animator>();
+        _panelOriginalPosition = this.gameObject.GetComponent<RectTransform>().position;
     }
 
     public void SetToBlankCard()
@@ -60,6 +71,7 @@ public class CardPanel : MonoBehaviour
     {
         if (_cardLogic != null)
         {
+            Debug.Log(this._card.CardInfo.CardName);
             // tell player hand to handle graphics related things that arent directly related to this particular card
             if (isCardPressedOn)
             {
@@ -69,12 +81,12 @@ public class CardPanel : MonoBehaviour
                 isCardPressedOn = false;
                 _card.CardHighlightImage.color = new Color(1, 0, 0, 0);
                 // move back to 0,0
+                this.gameObject.GetComponent<RectTransform>().position = _panelOriginalPosition;
             }
             else
             {
                 PressedCard.Invoke(true, this.gameObject);
                 _card.CardHighlightImage.color = new Color(1, 0, 0, 1);
-                _cardLogic.OnPressCard();
                 isCardPressedOn = true;
                 //_animator.SetTrigger("Pressed");
  
@@ -82,4 +94,10 @@ public class CardPanel : MonoBehaviour
 
         }
     }
+
+    public void MoveCardPosition(Vector2 pos)
+    {
+        this.gameObject.GetComponent<RectTransform>().position = pos;
+    }
+
 }

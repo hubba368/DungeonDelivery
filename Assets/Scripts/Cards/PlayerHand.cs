@@ -19,13 +19,14 @@ public class PlayerHand : MonoBehaviour
     DiscardPile _currentDiscardPile;
     Card placeholderCard;
     GameObject _currentSelectedCard;
+    List<GameObject> _testslot = new List<GameObject>();
 
     [SerializeField]
-    GameObject _cardCraftPlacementAreaLeft;
+    CardPlaceableArea _cardCraftPlacementAreaLeft;
     [SerializeField]
-    GameObject _cardCraftPlacementAreaRight;
+    CardPlaceableArea _cardCraftPlacementAreaRight;
     [SerializeField]
-    GameObject _cardPlacementAreaMiddle;
+    CardPlaceableArea _cardPlacementAreaMiddle;
 
     void Awake ()
     {      
@@ -36,7 +37,9 @@ public class PlayerHand : MonoBehaviour
         temp.onClick.AddListener(Root.GetComponentFromRoot<EncounterHandler>().TestCombineCardAction);
 
         _currentDeck = Root.GetComponentFromRoot<Deck>();
-        _currentDiscardPile = Root.GetComponentFromRoot<DiscardPile>();
+        _currentDiscardPile = Root.GetComponentFromRoot<DiscardPile>();      
+
+        _testslot = GameObject.FindGameObjectsWithTag("CardSlot").ToList();
     }
 
     public void Initialise()
@@ -57,7 +60,7 @@ public class PlayerHand : MonoBehaviour
     private GameObject CreateCardFromInfo(CardInfo info, int cardSlot)
     {
         Vector3 scale = _cardPrototype.transform.localScale;
-        var t = Instantiate(_cardPrototype, this.transform.GetChild(cardSlot));
+        var t = Instantiate(_cardPrototype, _testslot[cardSlot].transform);
         t.transform.localScale = scale;
 
         t.GetComponent<Card>().InitialiseCard(info);
@@ -81,6 +84,7 @@ public class PlayerHand : MonoBehaviour
         {
             var temp = CreateCardFromInfo(Root.GetComponentFromRoot<Deck>().DrawCardInfoFromDeck(), slot);
             _currentHand[slot] = temp;
+            _currentHand[slot].GetComponent<Card>().isBlank = false;
 
             Debug.Log("Card Name: " + temp.GetComponent<Card>().CardInfo.CardName + "\n"
                 + "CardType: " + temp.GetComponent<Card>().CardInfo.CardType
@@ -93,6 +97,19 @@ public class PlayerHand : MonoBehaviour
         }
     }
 
+    public void AddCraftedCardToHand(CardInfo newCard)
+    {
+        int slot = CheckForFreeCardSlot();
+
+        if (slot != -1)
+        {
+            var temp = CreateCardFromInfo(newCard, slot);
+            _currentHand[slot] = temp;
+            _currentHand[slot].GetComponent<Card>().isBlank = false;
+            temp.GetComponent<Card>().PlayerHandIndex = slot;
+        }
+    }
+
     public void DiscardAllCardsFromHand()
     {
         Debug.Log("hand count " + _currentHand.Count);
@@ -101,30 +118,28 @@ public class PlayerHand : MonoBehaviour
 
         foreach(var obj in _currentHand)
         {
-            
-            //todo update this to use cardlogic class to let cards destroy themselves
-            //Debug.Log("destroying card: " + obj.Value.GetComponent<Card>().CardInfo.CardName);
-            DiscardCardFromHand(obj.Value.GetComponent<Card>());
-            obj.Value.gameObject.GetComponent<CardLogic>().OnDestroyCard();
+            if (obj.Value.GetComponent<Card>().isBlank == false)
+            {
+                Root.GetComponentFromRoot<DiscardPile>().AddToDiscardPile(obj.Value.GetComponent<Card>().CardInfo);
+                obj.Value.GetComponent<Card>().CardLogic.OnDestroyCard();
+            }
+
         }
         _currentHand.Clear();
     }
 
     public void DiscardCardFromHand(Card card)
     {
+        _currentHand[card.PlayerHandIndex] = _cardPrototype;
         Root.GetComponentFromRoot<DiscardPile>().AddToDiscardPile(card.CardInfo);
-        
+        card.CardLogic.OnDestroyCard();
     }
 
     private int CheckForFreeCardSlot()
     {
         int result = -1;
 
-        if(_currentHand == null)
-        {
-            Debug.Log("null");
-        }
-
+        Debug.Log(_currentHand.Count);
         for(int i = 0; i < _currentHand.Count; ++i)
         {
             if (_currentHand[i].GetComponent<CardPanel>().IsBlank == true)
@@ -138,79 +153,121 @@ public class PlayerHand : MonoBehaviour
         return result;
     }
 
-    private void RemoveSingleCardFromHand(GameObject obj)
-    {
-        _currentHand.Remove(obj.GetComponent<Card>().PlayerHandIndex);
-    }
 
-    private void AddSingleCardToHand(GameObject obj)
-    {
-
-    }
 
     private void OnPressCard(bool isCardPressed, GameObject cardPanel)
     {
+        CardInfo currentCardInfo = null;
+
+        // get cardpanel that has been clicked on from currenthand
+        if (_currentHand.ContainsValue(cardPanel))
+        {
+            var slot = cardPanel.GetComponent<Card>().PlayerHandIndex;
+            var temp = _currentHand[slot];
+            _currentSelectedCard = temp;
+        }
+        else
+        {
+            throw new System.NullReferenceException("Card not found in current player hand.");
+        }
+
         if (isCardPressed)
         {
-            // get cardpanel that has been clicked on from currenthand
-            if (_currentHand.ContainsValue(cardPanel))
-            {
-                var slot = cardPanel.GetComponent<Card>().PlayerHandIndex;
-                var temp = _currentHand[slot];
-                _currentSelectedCard = temp;
-                //RemoveSingleCardFromHand(cardPanel);
-            }
-            // remove selected card from the hand (and then return it if needed)
 
+            currentCardInfo = _currentSelectedCard.GetComponent<Card>().CardInfo;
 
-            if(cardPanel.GetComponent<CardPanel>().Card.CardInfo.CardType.GetTypeString() != "Combo")
+            if (currentCardInfo.CardType.GetTypeString() != "Combo")
             {
-                SetCardPlacementArea(_cardCraftPlacementAreaLeft, true, new Color(1, 0, 0, 1));
-                SetCardPlacementArea(_cardCraftPlacementAreaRight, true, new Color(1, 0, 0, 1));
+                if(_cardCraftPlacementAreaLeft.CompareCardInArea(currentCardInfo) == false)
+                {
+                    _cardCraftPlacementAreaLeft.ActivateHighlight(true);
+                }
+                if(_cardCraftPlacementAreaRight.CompareCardInArea(currentCardInfo) == false)
+                {
+                    _cardCraftPlacementAreaRight.ActivateHighlight(true);
+                }
             }
             else
             {
-                SetCardPlacementArea(_cardPlacementAreaMiddle, true, new Color(1, 0, 0, 1));
+                if(_cardPlacementAreaMiddle.CompareCardInArea(currentCardInfo) == false)
+                {
+                    SetCardPlacementArea(_cardPlacementAreaMiddle.gameObject, true);
+                }
             }
         }
         else
         {
-            if (cardPanel.GetComponent<CardPanel>().Card.CardInfo.CardType.GetTypeString() != "Combo")
-            {
-                SetCardPlacementArea(_cardCraftPlacementAreaLeft, false, new Color(1, 0, 0, 0));
-                SetCardPlacementArea(_cardCraftPlacementAreaRight, false, new Color(1, 0, 0, 0));
+            // move the cards back to original pos
+            currentCardInfo = _currentSelectedCard.GetComponent<Card>().CardInfo;
+
+            if (currentCardInfo.CardType.GetTypeString() != "Combo")
+            {   
+                if (_cardCraftPlacementAreaLeft.CompareCardInArea(currentCardInfo) == true)
+                {
+                    SetCardPlacementArea(_cardCraftPlacementAreaLeft.gameObject, false);
+                    _cardCraftPlacementAreaLeft.RemoveCardFromArea();
+
+                }
+                if (_cardCraftPlacementAreaRight.CompareCardInArea(currentCardInfo) == true)
+                {
+                    SetCardPlacementArea(_cardCraftPlacementAreaRight.gameObject, false);
+                    _cardCraftPlacementAreaRight.RemoveCardFromArea();
+
+                }
             }
             else
             {
-                SetCardPlacementArea(_cardPlacementAreaMiddle, false, new Color(1, 0, 0, 0));
+                if (_cardPlacementAreaMiddle.CompareCardInArea(currentCardInfo) == true)
+                {
+                    SetCardPlacementArea(_cardPlacementAreaMiddle.gameObject, false);
+                    _cardPlacementAreaMiddle.RemoveCardFromArea();
+                }
             }
         }
     }
 
-    private void SetCardPlacementArea(GameObject obj, bool enabled, Color color)
+    private void SetCardPlacementArea(GameObject obj, bool enabled)
     {
         obj.SetActive(enabled);
-        obj.GetComponent<Image>().color = color;
     }
 
-    public void MoveCardToHighlightArea()
+    public void MoveCardToHighlightArea(Transform area)
     {
         if(_currentSelectedCard!= null)
         {
-            //_currentSelectedCard.GetComponent<RectTransform>().anchoredPosition = EventSystem.current.currentSelectedGameObject.transform.localPosition;
-
-            Root.GetComponentFromRoot<EncounterHandler>().AddCardToComboPool(_currentSelectedCard);
+            _currentSelectedCard.GetComponent<CardPanel>().MoveCardPosition(new Vector2(area.position.x, area.position.y));
+            area.GetComponent<CardPlaceableArea>().AttachCardToArea(_currentSelectedCard);
+            SetCardPlacementArea(area.gameObject, false);
         }
         
     }
 
-    public void EndCardCrafting()
+    public void OnUseComboCardOnField()
     {
-        Root.GetComponentFromRoot<EncounterHandler>().EndCardCraftingPhase();
+        var card = _cardPlacementAreaMiddle.GetAttachedCard();
+        if (card)
+        {
+            // TODO make this use events instead to reduce coupling?
+            card.GetComponent<CardLogic>().OnUseCard();
+        }
     }
 
-    public void OnPressEndCardCrafting()
+    public List<GameObject> GetCardFromCraftingArea()
     {
-        // add back the selected cards
+        var temp = new List<GameObject>();
+        temp.Add(_cardCraftPlacementAreaLeft.GetAttachedCard());
+        temp.Add(_cardCraftPlacementAreaRight.GetAttachedCard());
+
+        return temp;
+    }
+
+    public void EndCardCrafting()
+    {
+        _cardCraftPlacementAreaLeft.RemoveCardFromArea();
+        _cardCraftPlacementAreaRight.RemoveCardFromArea();
+        _cardPlacementAreaMiddle.RemoveCardFromArea();
+        _cardCraftPlacementAreaLeft.ActivateHighlight(false);
+        _cardCraftPlacementAreaRight.ActivateHighlight(false);
+        _cardPlacementAreaMiddle.ActivateHighlight(false);
     }
 }

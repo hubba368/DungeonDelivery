@@ -49,7 +49,6 @@ public class PizzaGenerator : MonoBehaviour
 
     public void AssemblePizza(List<IPizzaIngredient> ingredients)
     {
-        // Extra TODO: food types can determine end product
         CraftedPizza newPizza = new CraftedPizza();
         string finalName = "";
         int mostCommonFood = GetMostCommonFoodType(ingredients);

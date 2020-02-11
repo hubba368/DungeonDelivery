@@ -17,10 +17,9 @@ public class CardAttributes : ScriptableObject
     [SerializeField]
     private bool _cardTarget;
 
-    [Tooltip("The special status that this card can afflict. Can either be positive or negative.")]
+    [Tooltip("The special effect that this card can afflict.")]
     [SerializeField]
-    // will probs be another SO 'cardEffect' or 'cardStatus'
-    private int _baseStatus;
+    private BaseCardEffect _baseEffect;
 
     [Tooltip("The value ID that connects the attributes to the cards' main info.")]
     [SerializeField]
@@ -50,11 +49,11 @@ public class CardAttributes : ScriptableObject
         }
     }
 
-    public int BaseStatus
+    public BaseCardEffect BaseEffect
     {
         get
         {
-            return _baseStatus;
+            return _baseEffect;
         }
     }
 
