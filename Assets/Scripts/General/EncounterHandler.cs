@@ -21,23 +21,19 @@ public class EncounterHandler : MonoBehaviour
     GameObject _currentEncounterThing;
     [SerializeField]
     BaseEnemy _currentEnemyInCombat;
-    [SerializeField]
-    List<GameObject> _selectedCardsForCombination = new List<GameObject>();
 
-    ComboCardCreator _cardCreator;
-    PlayerHand _playerCombatHand;
+    CombatHandler _combatHandler;
+
 
     bool _playerInCombat = false;
-    bool _isPlayerTurn = false;
 
-    public UnityAction TestEndTurnAction;
-    public UnityAction TestCombineCardAction;
+
+
 
     private void Awake()
     {
         DontDestroyOnLoad(this);
-        TestEndTurnAction += BeginEnemyTurn;
-        TestCombineCardAction += OnCombineCardsButtonPress;
+
     }
 
     private void Start()
@@ -48,7 +44,7 @@ public class EncounterHandler : MonoBehaviour
     private void Init()
     {
         _playerChar = Root.Instance._playerChar;
-        _cardCreator = Instantiate(_comboCardCreatorPrefab).GetComponent<ComboCardCreator>();
+        
     }
 
     public void StartEncounter(EncounterType type, Vector3 spawnPos)
@@ -102,27 +98,28 @@ public class EncounterHandler : MonoBehaviour
         Root.GetComponentFromRoot<UIHandler>().HideAllActiveUIPanels();
         Root.GetComponentFromRoot<UIHandler>().ShowCombatPanel();
 
-        _currentEnemyInCombat = enemy;
-        enemy.InitialiseThingForCombat(100.0f);
-        enemy.CombatAI.inCombat = true;
-
         _playerInCombat = true;
         var hand = Root.GetComponentFromRoot<UIHandler>().CurrentActivePanel.GetComponent<PlayerHand>();
-        _playerCombatHand = hand;
-        //StartCoroutine("PlayerCombatLoop", hand);
-        StartNewPlayerTurn(_playerCombatHand);
-        
+        var obj = this.gameObject.AddComponent<CombatHandler>();
+        var cardCreator = Instantiate(_comboCardCreatorPrefab).GetComponent<ComboCardCreator>();
+        _combatHandler = obj;
+        _combatHandler.StartCombatEncounter(enemy, hand, cardCreator);
 
     }
 
-    private void StartNewPlayerTurn(PlayerHand hand)
+    public void EndCombatEncounter()
     {
-        Debug.Log("starting new player turn");
-        hand.Initialise();
-        BeginPlayerTurn(hand);
-        BeginEnemyStrategise(_currentEnemyInCombat);
+        if (_combatHandler)
+        {
+            _combatHandler.EndCombatEncounter();
+            _combatHandler = null;
+            _playerInCombat = false;
+            EndEncounter();
+        }
     }
 
+
+    /*
     IEnumerator PlayerCombatLoop(PlayerHand hand)
     {
         while (_playerInCombat)
@@ -135,99 +132,10 @@ public class EncounterHandler : MonoBehaviour
             BeginEnemyTurn();
         }
 
-    }
+    }*/
 
-    private void BeginPlayerTurn(PlayerHand hand)
-    {
-        PlayerDrawCard(hand);
-        PlayerDrawCard(hand);
-        PlayerDrawCard(hand);
-        PlayerDrawCard(hand);
-        PlayerGainMana(5);
-    }
+    
 
-    public void BeginEnemyTurn()
-    {
-        Debug.Log("starting new enemy turn");
-        PlayerEndTurn();
-        _currentEnemyInCombat.CombatAI.InitiateMove();
-        // TODO: each enemy type has its own moveset 
-        StartNewPlayerTurn(_playerCombatHand);
-    }
-
-    private void BeginEnemyStrategise(BaseEnemy enemy)
-    {
-        Debug.Log("enemy is thinking about hand");
-        enemy.CombatAI.InitiateThink();
-    }
-
-    private void PlayerEndTurn()
-    {
-        _isPlayerTurn = false;
-        PlayerDiscardHand();
-        QuitCardCraftingPhase();
-        //BeginEnemyTurn();
-
-    }
-
-    private void PlayerDrawCard(PlayerHand hand)
-    {
-        hand.DrawCardFromDeck();
-    }
-
-    private void PlayerDiscardCard(PlayerHand hand, Card card)
-    {
-        hand.DiscardCardFromHand(card);
-    }
-
-    private void PlayerDiscardHand()
-    {
-        _playerCombatHand.DiscardAllCardsFromHand();
-    }
-
-    private void PlayerGainMana(int amount)
-    {
-        _playerChar.IncrementPlayerMana(amount);
-    }
-
-    public void AddCardToComboPool(GameObject card)
-    {
-        _selectedCardsForCombination.Add(card);
-    }
-
-    public void QuitCardCraftingPhase()
-    {
-        _playerCombatHand.EndCardCrafting();
-        if (_selectedCardsForCombination.Count > 0)
-        {
-            _selectedCardsForCombination.Clear();
-        }
-    }
-
-    public void OnCombineCardsButtonPress()
-    {
-        CombineCards();
-    }
-
-    private void CombineCards()
-    {
-
-        if (_cardCreator != null)
-        {
-            _selectedCardsForCombination = _playerCombatHand.GetCardFromCraftingArea();
-
-            var result = _cardCreator.CombineCards(_selectedCardsForCombination[0].GetComponent<Card>(), _selectedCardsForCombination[1].GetComponent<Card>());
-
-            if(result != null)
-            {
-                _playerCombatHand.DiscardCardFromHand(_selectedCardsForCombination[0].GetComponent<Card>());
-                _playerCombatHand.DiscardCardFromHand(_selectedCardsForCombination[1].GetComponent<Card>());
-                Debug.Log(result.CardName);
-                _playerCombatHand.AddCraftedCardToHand(result);
-                QuitCardCraftingPhase();               
-            }
-
-        }
-    }
+    
     
 }

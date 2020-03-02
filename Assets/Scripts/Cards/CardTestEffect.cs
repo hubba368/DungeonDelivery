@@ -7,6 +7,8 @@ public class CardTestEffect : BaseCardEffect
 {
 
     bool _effectTarget;
+    [SerializeField]
+    BaseCharacterEffect _characterEffect;
 
     public override bool EffectTarget
     {
@@ -16,13 +18,21 @@ public class CardTestEffect : BaseCardEffect
         }
     }
 
-    public override void InitiateCardEffect()
+    public override BaseCharacterEffect CharacterEffect
+    {
+        get
+        {
+            return _characterEffect;
+        }
+    }
+
+    // for this, would do effects that happen when a card is initially played?
+    public override EffectData InitiateCardEffect()
     {
         Debug.Log("starting test card effect");
         _effectTarget = false;
+        EffectData temp = new EffectData(_effectTarget, _characterEffect);
 
-        Debug.Log("running effect tests..");
-        Debug.Log("running player/enemy ");
-
+        return temp;
     }
 }

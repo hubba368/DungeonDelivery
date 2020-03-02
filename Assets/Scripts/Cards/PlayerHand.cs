@@ -29,17 +29,21 @@ public class PlayerHand : MonoBehaviour
     CardPlaceableArea _cardPlacementAreaMiddle;
 
     void Awake ()
-    {      
-        //TODO change this 
-        Button button = GameObject.Find("TestEndTurnButton").GetComponent<Button>();
-        button.onClick.AddListener(Root.GetComponentFromRoot<EncounterHandler>().TestEndTurnAction);
-        var temp = GameObject.Find("TestCombineButton").GetComponent<Button>();
-        temp.onClick.AddListener(Root.GetComponentFromRoot<EncounterHandler>().TestCombineCardAction);
-
+    {            
         _currentDeck = Root.GetComponentFromRoot<Deck>();
         _currentDiscardPile = Root.GetComponentFromRoot<DiscardPile>();      
 
         _testslot = GameObject.FindGameObjectsWithTag("CardSlot").ToList();
+    }
+
+    public void InitDebugStuff()
+    {
+        //TODO change this 
+        Button button = GameObject.Find("TestEndTurnButton").GetComponent<Button>();
+        button.onClick.AddListener(Root.GetComponentFromRoot<CombatHandler>().TestEndTurnAction);
+        var temp = GameObject.Find("TestCombineButton").GetComponent<Button>();
+        temp.onClick.AddListener(Root.GetComponentFromRoot<CombatHandler>().TestCombineCardAction);
+
     }
 
     public void Initialise()
@@ -65,7 +69,7 @@ public class PlayerHand : MonoBehaviour
 
         t.GetComponent<Card>().InitialiseCard(info);
         t.GetComponent<CardPanel>().InitCardPanel();
-
+        t.GetComponent<CardLogic>().Init();
         t.GetComponent<CardPanel>().PressedCard += this.OnPressCard;
 
         return t;
@@ -78,23 +82,8 @@ public class PlayerHand : MonoBehaviour
             _currentDeck.CurrentDeck = _currentDiscardPile.TakeAllCardsFromDiscardPile();
         }
 
-        int slot = CheckForFreeCardSlot();
+        AddCraftedCardToHand(Root.GetComponentFromRoot<Deck>().DrawCardInfoFromDeck());
 
-        if(slot != -1)
-        {
-            var temp = CreateCardFromInfo(Root.GetComponentFromRoot<Deck>().DrawCardInfoFromDeck(), slot);
-            _currentHand[slot] = temp;
-            _currentHand[slot].GetComponent<Card>().isBlank = false;
-
-            Debug.Log("Card Name: " + temp.GetComponent<Card>().CardInfo.CardName + "\n"
-                + "CardType: " + temp.GetComponent<Card>().CardInfo.CardType
-                + "Card Cost:" + temp.GetComponent<Card>().CardInfo.CardAttributes.BaseCardCost + "\n");
-            temp.GetComponent<Card>().PlayerHandIndex = slot;
-        }
-        else
-        {
-            Debug.Log("no slot picked");
-        }
     }
 
     public void AddCraftedCardToHand(CardInfo newCard)
@@ -107,7 +96,21 @@ public class PlayerHand : MonoBehaviour
             _currentHand[slot] = temp;
             _currentHand[slot].GetComponent<Card>().isBlank = false;
             temp.GetComponent<Card>().PlayerHandIndex = slot;
+            Debug.Log("Card Name: " + temp.GetComponent<Card>().CardInfo.CardName + "\n"
+                + "CardType: " + temp.GetComponent<Card>().CardInfo.CardType
+                + "Card Cost:" + temp.GetComponent<Card>().CardInfo.CardAttributes.BaseCardCost + "\n");
+            // call event here hooking up card logic to combathandler for game logic??
+            temp.GetComponent<CardLogic>().AttachMethodToEffectEvent(PropagateEffectToIntendedTarget);
         }
+        else
+        {
+            Debug.Log("no slot picked");
+        }
+    }
+
+    public void PropagateEffectToIntendedTarget()
+    {
+        Debug.Log("test propagate");
     }
 
     public void DiscardAllCardsFromHand()
@@ -145,15 +148,12 @@ public class PlayerHand : MonoBehaviour
             if (_currentHand[i].GetComponent<CardPanel>().IsBlank == true)
             {
                 result = i;
-                //_currentHand.Remove(i);
                 break;
             }
         }
 
         return result;
     }
-
-
 
     private void OnPressCard(bool isCardPressed, GameObject cardPanel)
     {
@@ -243,8 +243,9 @@ public class PlayerHand : MonoBehaviour
     }
 
     public void OnUseComboCardOnField()
-    {
+    {        
         var card = _cardPlacementAreaMiddle.GetAttachedCard();
+        
         if (card)
         {
             // TODO make this use events instead to reduce coupling?

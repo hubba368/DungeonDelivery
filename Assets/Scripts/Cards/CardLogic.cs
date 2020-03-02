@@ -1,5 +1,6 @@
 ﻿
 using System.Collections;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,17 +8,19 @@ using UnityEngine;
 public class CardLogic : MonoBehaviour
 {
     // this class will handle a cards in game behaviour
+    [SerializeField]
     Card _cardInstance;
     CardAttributes _cardAttributes;
     BaseCardEffect _attachedCardEffect;
 
-    private void Start()
+    public void Init()
     {
         _cardInstance = this.GetComponent<Card>();
         if (_cardInstance)
         {
             _cardAttributes = _cardInstance.CardInfo.CardAttributes;
             _attachedCardEffect = _cardAttributes.BaseEffect;
+            Debug.Log(_attachedCardEffect);
         }
     }
 
@@ -29,17 +32,32 @@ public class CardLogic : MonoBehaviour
     public void OnUseCard()
     {
         if (_attachedCardEffect)
-        {
-            _attachedCardEffect.InitiateCardEffect();
+        {           
+            var temp = _attachedCardEffect.InitiateCardEffect();
+            temp.Effect.PropagateEffectToCharacter();
         }
+
     } 
+
+    public void AttachMethodToEffectEvent(Action method)
+    {
+        if (_attachedCardEffect)
+        {
+            _attachedCardEffect.CharacterEffect.PropagateEffectToCharacter += method;
+        }
+        else
+        {
+            Debug.Log(_cardInstance.CardInfo.CardName);
+        }
+        
+    }
 
     public void OnCardStatsChange()
     {
         if(_cardAttributes == null)
         {
             throw new System.NullReferenceException("card has no attributes that can be changed.");
-            
+
         }
 
 

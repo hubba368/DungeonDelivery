@@ -2,15 +2,34 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TestCharacterEffect : MonoBehaviour {
+[CreateAssetMenu(menuName = "InGameThings/Cards/CharacterEffects/DebugEffect")]
+public class TestCharacterEffect : BaseCharacterEffect
+{
+    private int _effectDuration;
+    private int _effectOnHealth;
 
-	// Use this for initialization
-	void Start () {
-		
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		
+    public override int EffectDuration
+    {
+        get
+        {
+            return _effectDuration;
+        }
+    }
+
+    public override int EffectOnHealth
+    {
+        get
+        {
+            return _effectOnHealth;
+        }
+    }
+
+    // Use this for initialization
+    void Start ()
+    {
+        if (!EventIsNull())
+        {
+
+        }
 	}
 }

@@ -1,16 +1,16 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
-public class BaseCharacterEffect : MonoBehaviour {
+public abstract class BaseCharacterEffect : ScriptableObject
+{
+    public abstract int EffectDuration { get; }
+    public abstract int EffectOnHealth { get; }
 
-	// Use this for initialization
-	void Start () {
-		
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		
-	}
+    public event Func<BaseCharacterEffect> PropagateEffectToCharacter;
+    protected bool EventIsNull()
+    {
+        return PropagateEffectToCharacter == null;
+    }
 }
