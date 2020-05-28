@@ -27,7 +27,7 @@ public class CardTestEffect : BaseCardEffect
     }
 
     // for this, would do effects that happen when a card is initially played?
-    public override EffectData InitiateCardEffect()
+    public override EffectData InitiateCardEffectOnSelf()
     {
         Debug.Log("starting test card effect");
         _effectTarget = false;

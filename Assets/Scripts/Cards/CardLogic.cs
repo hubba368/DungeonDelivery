@@ -33,8 +33,11 @@ public class CardLogic : MonoBehaviour
     {
         if (_attachedCardEffect)
         {           
-            var temp = _attachedCardEffect.InitiateCardEffect();
-            temp.Effect.PropagateEffectToCharacter();
+            var temp = _attachedCardEffect.InitiateCardEffectOnSelf();
+            Root.GetComponentFromRoot<CombatHandler>()._playerHand.PropagateEffectToIntendedTarget(temp);
+
+            //TODO: figure out way to have no coupling between card logic and effect targets
+            //temp.Effect.OnPropagate.Invoke();
         }
 
     } 
@@ -43,7 +46,7 @@ public class CardLogic : MonoBehaviour
     {
         if (_attachedCardEffect)
         {
-            _attachedCardEffect.CharacterEffect.PropagateEffectToCharacter += method;
+            //_attachedCardEffect.CharacterEffect.OnPropagate += method;
         }
         else
         {

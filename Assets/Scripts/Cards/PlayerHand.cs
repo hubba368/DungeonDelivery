@@ -100,7 +100,7 @@ public class PlayerHand : MonoBehaviour
                 + "CardType: " + temp.GetComponent<Card>().CardInfo.CardType
                 + "Card Cost:" + temp.GetComponent<Card>().CardInfo.CardAttributes.BaseCardCost + "\n");
             // call event here hooking up card logic to combathandler for game logic??
-            temp.GetComponent<CardLogic>().AttachMethodToEffectEvent(PropagateEffectToIntendedTarget);
+            //temp.GetComponent<CardLogic>().AttachMethodToEffectEvent(PropagateEffectToIntendedTarget);
         }
         else
         {
@@ -108,9 +108,10 @@ public class PlayerHand : MonoBehaviour
         }
     }
 
-    public void PropagateEffectToIntendedTarget()
+    public void PropagateEffectToIntendedTarget(BaseCardEffect.EffectData effect)
     {
         Debug.Log("test propagate");
+        Root.GetComponentFromRoot<CombatHandler>().HandleCardEffectPropagation(effect);
     }
 
     public void DiscardAllCardsFromHand()

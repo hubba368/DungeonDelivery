@@ -8,7 +8,7 @@ public class CombatHandler : MonoBehaviour
 
     private BaseEnemy _currentCombatTarget;
     private PlayerController _playerChar;
-    private PlayerHand _playerHand;
+    public PlayerHand _playerHand;
     private ComboCardCreator _cardCreator;
 
     [SerializeField]
@@ -156,7 +156,30 @@ public class CombatHandler : MonoBehaviour
         }
     }
 
-    public void HandleCardEffectPropagation()
+    public void HandleCardEffectPropagation(BaseCardEffect.EffectData effect)
+    {
+        // handle updating of card effects here?
+        // send event invocations out that will attach to baseenemy/playerchar
+        // combat handler WILL handle attached effects after every turn / start of a player turn.
+        Debug.Log("Combat Handler recieved new Card Effect." +
+            " Recieved: " + effect.Effect.EffectName + "\n" +
+            "Effect Target = " + effect.Target + "\n" +
+            "Effect on health = " + effect.Effect.EffectOnHealth + "\n" +
+            "Effect Duration Num of Turns = " + effect.Effect.EffectDuration);
+
+        switch (effect.Target)
+        { // true = player false = enemy
+            // TODO should probs change this maybe
+            case true:
+                _playerChar.AttachedCardEffects.Add(effect.Effect);
+                break;
+            case false:
+                _currentCombatTarget.AttachedCardEffects.Add(effect.Effect);
+                break;
+        }
+    }
+
+    private void UpdateCardEffectsAttachedToChars()
     {
 
     }

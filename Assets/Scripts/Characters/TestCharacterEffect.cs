@@ -5,8 +5,12 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "InGameThings/Cards/CharacterEffects/DebugEffect")]
 public class TestCharacterEffect : BaseCharacterEffect
 {
+    [SerializeField]
     private int _effectDuration;
+    [SerializeField]
     private int _effectOnHealth;
+    [SerializeField]
+    private string _effectName;
 
     public override int EffectDuration
     {
@@ -21,6 +25,14 @@ public class TestCharacterEffect : BaseCharacterEffect
         get
         {
             return _effectOnHealth;
+        }
+    }
+
+    public override string EffectName
+    {
+        get
+        {
+            return _effectName;
         }
     }
 

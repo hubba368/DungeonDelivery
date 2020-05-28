@@ -20,6 +20,14 @@ public abstract class BaseCardEffect : ScriptableObject
             }
         }
 
+        public bool Target
+        {
+            get
+            {
+                return target;
+            }
+        }
+
         public EffectData(bool t, BaseCharacterEffect e)
         {
             target = t;
@@ -27,5 +35,5 @@ public abstract class BaseCardEffect : ScriptableObject
         }
     }
 
-    public abstract EffectData InitiateCardEffect();
+    public abstract EffectData InitiateCardEffectOnSelf();
 }

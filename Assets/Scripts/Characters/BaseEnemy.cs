@@ -9,6 +9,7 @@ public class BaseEnemy : MonoBehaviour, BaseCharacter
     private string _characterName;
     private float _characterHealth;
     private List<Sprite> _characterImages;
+    private List<BaseCharacterEffect> _attachedCardEffects;
     private ThingType _thingType;
     private ThingInfo _thingInfo;
 
@@ -95,6 +96,14 @@ public class BaseEnemy : MonoBehaviour, BaseCharacter
         }
     }
 
+    public List<BaseCharacterEffect> AttachedCardEffects
+    {
+        get
+        {
+            return _attachedCardEffects;
+        }
+    }
+
     public EnemyEncounterAI CombatAI;
 
     public void InitialiseThing(string name, string desc, string charName, List<Sprite> charImgs, ThingType thingType, ThingInfo info)
@@ -118,5 +127,11 @@ public class BaseEnemy : MonoBehaviour, BaseCharacter
     {
         //GenDialogueLines = type.GeneralDialogueLines;
         //CbtDialogueLines = type.CombatDialogueLines;
+    }
+
+    public void AttachNewCardEffectToEnemy(BaseCharacterEffect effect)
+    {
+        // TODO: check if effect already exists?
+        _attachedCardEffects.Add(effect);
     }
 }

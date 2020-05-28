@@ -33,6 +33,7 @@ public class PlayerController : MonoBehaviour
 
     public bool HasEnteredEncounter = false;
     public BaseCharacter EncounteredThing = null;
+    public List<BaseCharacterEffect> AttachedCardEffects = new List<BaseCharacterEffect>();
 
 	// Use this for initialization
 	void Start ()

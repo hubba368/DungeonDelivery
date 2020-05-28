@@ -7,10 +7,12 @@ public abstract class BaseCharacterEffect : ScriptableObject
 {
     public abstract int EffectDuration { get; }
     public abstract int EffectOnHealth { get; }
+    public abstract string EffectName { get; }
 
-    public event Func<BaseCharacterEffect> PropagateEffectToCharacter;
+    public delegate BaseCharacterEffect PropagateEffectToCharacter();
+    public event PropagateEffectToCharacter OnPropagate;
     protected bool EventIsNull()
     {
-        return PropagateEffectToCharacter == null;
+        return OnPropagate == null;
     }
 }
