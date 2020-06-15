@@ -1,18 +1,22 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public abstract class BaseCardEffect : ScriptableObject
 {
-    public abstract bool EffectTarget { get; }
-    public abstract BaseCharacterEffect CharacterEffect { get; }
+    public abstract CardPotentialTarget EffectTarget { get; }
+    public abstract BaseCardEffectStats CardEffectDefaults { get; }
+    public abstract EffectData CurrentEffectData { get; }
+    public abstract CardPotentialState EffectPreferredState { get; }
 
-    public struct EffectData
+    public class EffectData
     {
-        bool target;
-        BaseCharacterEffect effect;
+        CardPotentialTarget target;
+        BaseCardEffectStats effect;
+        string effectName;
 
-        public BaseCharacterEffect Effect
+        public BaseCardEffectStats Effect
         {
             get
             {
@@ -20,7 +24,15 @@ public abstract class BaseCardEffect : ScriptableObject
             }
         }
 
-        public bool Target
+        public string EffectName
+        {
+            get
+            {
+                return effectName;
+            }
+        }
+
+        public CardPotentialTarget Target
         {
             get
             {
@@ -28,12 +40,18 @@ public abstract class BaseCardEffect : ScriptableObject
             }
         }
 
-        public EffectData(bool t, BaseCharacterEffect e)
+        public EffectData(CardPotentialTarget t, BaseCardEffectStats e, string eN)
         {
             target = t;
             effect = e;
+            effectName = eN;
         }
+
+        public EffectData() { }
     }
 
-    public abstract EffectData InitiateCardEffectOnSelf();
+    public abstract void InitialiseCardEffect();
+
+    public abstract EffectData InitiateCardEffect();
+    public abstract BaseCardEffect OnActivateCardEffect();
 }

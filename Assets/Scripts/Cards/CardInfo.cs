@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "Things", menuName = "Things/CardInfo")]
+/// <summary>
+/// CardInfo handles the UI side of cards, as well as holding ref to its crafting and attribute components.
+/// </summary>
 public class CardInfo : ScriptableObject
 {
     [Tooltip("The attributes that this card can have.")]

@@ -13,46 +13,53 @@ public class CardLogic : MonoBehaviour
     CardAttributes _cardAttributes;
     BaseCardEffect _attachedCardEffect;
 
+    PlayerHand _playerHandInstance;
+
+    // these will handle sending over card to combathandler
+    public void OnPropagateEffect(Card cardData)
+    {
+        if (PropagateEffectToCharacter != null)
+        {
+            PropagateEffectToCharacter.Invoke(cardData);
+        }
+    }
+    public Action<Card> PropagateEffectToCharacter;
+
     public void Init()
     {
         _cardInstance = this.GetComponent<Card>();
         if (_cardInstance)
         {
+            _playerHandInstance = Root.GetComponentFromRoot<CombatHandler>().PlayerHand;
             _cardAttributes = _cardInstance.CardInfo.CardAttributes;
-            _attachedCardEffect = _cardAttributes.BaseEffect;
-            Debug.Log(_attachedCardEffect);
+            _attachedCardEffect = _cardAttributes.DefaultCardEffect;
+            //Debug.Log(_attachedCardEffect);
         }
     }
 
     public void OnDestroyCard()
     {
+        PropagateEffectToCharacter = null;
         Destroy(this.gameObject);
     }
      
     public void OnUseCard()
-    {
-        if (_attachedCardEffect)
-        {           
-            var temp = _attachedCardEffect.InitiateCardEffectOnSelf();
-            Root.GetComponentFromRoot<CombatHandler>()._playerHand.PropagateEffectToIntendedTarget(temp);
-
-            //TODO: figure out way to have no coupling between card logic and effect targets
-            //temp.Effect.OnPropagate.Invoke();
-        }
-
-    } 
-
-    public void AttachMethodToEffectEvent(Action method)
-    {
-        if (_attachedCardEffect)
-        {
-            //_attachedCardEffect.CharacterEffect.OnPropagate += method;
-        }
-        else
+    {// initialise but do not activate card effect until it is needed.
+        if (_attachedCardEffect != null)
         {
             Debug.Log(_cardInstance.CardInfo.CardName);
+            var temp = _attachedCardEffect;
+            temp.InitialiseCardEffect();
+            OnPropagateEffect(_cardInstance);
         }
         
+    } 
+
+    // TODO check whether card is combo card might be because just using test effect on current attrib wich is used by all cards
+    public void AttachMethodToEffectEvent(Action<Card> method)
+    {
+        PropagateEffectToCharacter += method;
+        Debug.Log(_cardInstance.CardInfo.CardName);
     }
 
     public void OnCardStatsChange()

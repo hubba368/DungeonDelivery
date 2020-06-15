@@ -21,7 +21,7 @@ public class Skeleton : BaseEnemy
 
         GetComponent<SpriteRenderer>().sprite = charInfo.ThingSprite;
 
-        Debug.Log(charInfo.ThingName + " + " + charInfo.ThingDescription);
+       // Debug.Log(charInfo.ThingName + " + " + charInfo.ThingDescription);
 	}
 
 }

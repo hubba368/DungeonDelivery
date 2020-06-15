@@ -13,6 +13,7 @@ public class CardPanel : MonoBehaviour
     private Card _card;
     private CardLogic _cardLogic;
     private Animator _animator;
+    private Button _cardButton;
     
     private bool isBlank = false;
     private bool isCardPressedOn = false;
@@ -59,6 +60,10 @@ public class CardPanel : MonoBehaviour
         _cardLogic = this.GetComponent<CardLogic>();
         _animator = this.GetComponent<Animator>();
         _panelOriginalPosition = this.gameObject.GetComponent<RectTransform>().position;
+        _cardButton = this.GetComponent<Button>();
+        _cardButton.onClick.AddListener(OnPressCard);
+
+        Root.GetComponentFromRoot<CombatHandler>().PlayerHand.OnResetCardHighlight += Test;
     }
 
     public void SetToBlankCard()
@@ -71,19 +76,10 @@ public class CardPanel : MonoBehaviour
     {
         if (_cardLogic != null)
         {
-            Debug.Log(this._card.CardInfo.CardName);
+            //Debug.Log(this._card.CardInfo.CardName);
             // tell player hand to handle graphics related things that arent directly related to this particular card
-            if (isCardPressedOn)
-            {
-                PressedCard.Invoke(false, this.gameObject);
-                //_animator.SetTrigger("NotPressed");
-                
-                isCardPressedOn = false;
-                _card.CardHighlightImage.color = new Color(1, 0, 0, 0);
-                // move back to 0,0
-                this.gameObject.GetComponent<RectTransform>().position = _panelOriginalPosition;
-            }
-            else
+
+            if(!isCardPressedOn)
             {
                 PressedCard.Invoke(true, this.gameObject);
                 _card.CardHighlightImage.color = new Color(1, 0, 0, 1);
@@ -91,8 +87,33 @@ public class CardPanel : MonoBehaviour
                 //_animator.SetTrigger("Pressed");
  
             }
+            else
+            {
+                OnPressOffCard();
+            }
 
         }
+    }
+
+    public void OnPressOffCard()
+    {
+        if(_cardLogic != null)
+        {
+            if (isCardPressedOn)
+            {
+                PressedCard.Invoke(false, this.gameObject);
+                isCardPressedOn = false;               
+            }
+        }
+    }
+    // TODO rename
+    public void Test()
+    {
+        isCardPressedOn = false;
+        //_animator.SetTrigger("NotPressed");
+        // move back to 0,0
+        this.gameObject.GetComponent<RectTransform>().position = _panelOriginalPosition;
+        _card.CardHighlightImage.color = new Color(1, 0, 0, 0);
     }
 
     public void MoveCardPosition(Vector2 pos)
@@ -100,4 +121,9 @@ public class CardPanel : MonoBehaviour
         this.gameObject.GetComponent<RectTransform>().position = pos;
     }
 
+    private void OnDestroy()
+    {// change this at some point so its done via playerhand? 
+        PressedCard = null;
+        Root.GetComponentFromRoot<CombatHandler>().PlayerHand.OnResetCardHighlight -= Test;
+    }
 }

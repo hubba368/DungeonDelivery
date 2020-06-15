@@ -10,6 +10,14 @@ public class EnemyUIPanel : MonoBehaviour
     [SerializeField]
     Image _currentEnemyNextAction;
 
+    public void InitPanel(BaseEnemy character)
+    {
+        _currentEnemyHealth = GetComponentInChildren<Text>();
+        _currentEnemyNextAction = GetComponentInChildren<Image>();
+        _currentEnemyHealth.text = character.CharacterHealth.ToString();
+        //_currentEnemyNextAction.sprite = null;
+    }
+
     public void UpdateEnemyHealth(int amount)
     {
         _currentEnemyHealth.text = amount.ToString();

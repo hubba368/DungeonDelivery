@@ -1,13 +1,15 @@
 ﻿using System.Collections;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
+public delegate void ResetCardHighlight();
+
 public class PlayerHand : MonoBehaviour
 {
-
     Dictionary<int, GameObject> _currentHand = new Dictionary<int, GameObject>();
 
     [SerializeField]
@@ -27,6 +29,10 @@ public class PlayerHand : MonoBehaviour
     CardPlaceableArea _cardCraftPlacementAreaRight;
     [SerializeField]
     CardPlaceableArea _cardPlacementAreaMiddle;
+
+    public event ResetCardHighlight OnResetCardHighlight;
+
+    public Action<Card> SendEffectToCombatHandler;
 
     void Awake ()
     {            
@@ -59,6 +65,11 @@ public class PlayerHand : MonoBehaviour
         _currentHand.Add(1, tempCard);
         _currentHand.Add(2, tempCard);
         _currentHand.Add(3, tempCard);
+    }
+
+    public void AttachMethodToEvent(Action<Card> method)
+    {
+        SendEffectToCombatHandler += method;
     }
 
     private GameObject CreateCardFromInfo(CardInfo info, int cardSlot)
@@ -99,8 +110,12 @@ public class PlayerHand : MonoBehaviour
             Debug.Log("Card Name: " + temp.GetComponent<Card>().CardInfo.CardName + "\n"
                 + "CardType: " + temp.GetComponent<Card>().CardInfo.CardType
                 + "Card Cost:" + temp.GetComponent<Card>().CardInfo.CardAttributes.BaseCardCost + "\n");
-            // call event here hooking up card logic to combathandler for game logic??
-            //temp.GetComponent<CardLogic>().AttachMethodToEffectEvent(PropagateEffectToIntendedTarget);
+
+            if(temp.GetComponent<Card>().CardInfo.CardType.GetTypeString() == "Combo")
+            {// TODO maybe figure out way to not use a dummy var for method pass
+                //BaseCardEffect.EffectData data = new BaseCardEffect.EffectData();
+                temp.GetComponent<CardLogic>().AttachMethodToEffectEvent(PropagateEffectToIntendedTarget);
+            }        
         }
         else
         {
@@ -108,10 +123,9 @@ public class PlayerHand : MonoBehaviour
         }
     }
 
-    public void PropagateEffectToIntendedTarget(BaseCardEffect.EffectData effect)
+    public void PropagateEffectToIntendedTarget(Card data)
     {
-        Debug.Log("test propagate");
-        Root.GetComponentFromRoot<CombatHandler>().HandleCardEffectPropagation(effect);
+        SendEffectToCombatHandler.Invoke(data);
     }
 
     public void DiscardAllCardsFromHand()
@@ -136,6 +150,7 @@ public class PlayerHand : MonoBehaviour
     {
         _currentHand[card.PlayerHandIndex] = _cardPrototype;
         Root.GetComponentFromRoot<DiscardPile>().AddToDiscardPile(card.CardInfo);
+        
         card.CardLogic.OnDestroyCard();
     }
 
@@ -158,6 +173,15 @@ public class PlayerHand : MonoBehaviour
 
     private void OnPressCard(bool isCardPressed, GameObject cardPanel)
     {
+        // Reset card highlights + placement areas
+        OnResetCardHighlight.Invoke();
+        SetCardPlacementArea(_cardCraftPlacementAreaLeft.gameObject, false);
+        _cardCraftPlacementAreaLeft.RemoveCardFromArea();
+        SetCardPlacementArea(_cardCraftPlacementAreaRight.gameObject, false);
+        _cardCraftPlacementAreaRight.RemoveCardFromArea();
+        SetCardPlacementArea(_cardPlacementAreaMiddle.gameObject, false);
+        _cardPlacementAreaMiddle.RemoveCardFromArea();
+
         CardInfo currentCardInfo = null;
 
         // get cardpanel that has been clicked on from currenthand
@@ -174,7 +198,6 @@ public class PlayerHand : MonoBehaviour
 
         if (isCardPressed)
         {
-
             currentCardInfo = _currentSelectedCard.GetComponent<Card>().CardInfo;
 
             if (currentCardInfo.CardType.GetTypeString() != "Combo")

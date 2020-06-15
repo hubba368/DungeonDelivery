@@ -1,18 +1,22 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 
 public class CombatHandler : MonoBehaviour
 {
 
-    private BaseEnemy _currentCombatTarget;
+    public BaseEnemy _currentCombatTarget;
     private PlayerController _playerChar;
-    public PlayerHand _playerHand;
+    private PlayerHand _playerHand;
     private ComboCardCreator _cardCreator;
 
     [SerializeField]
     private List<GameObject> _selectedCardsForCombination = new List<GameObject>();
+    
+    private Dictionary<BaseCardEffect, int> _currentActiveCardEffects = new Dictionary<BaseCardEffect, int>();
 
     private bool _isPlayerTurn = false;
 
@@ -21,9 +25,19 @@ public class CombatHandler : MonoBehaviour
 
     public UnityAction CardActivateEffectAction;
 
+    public PlayerHand PlayerHand
+    {
+        get
+        {
+            return _playerHand;
+        }
+    }
+
     private void Awake()
     {
         _playerChar = Root.Instance._playerChar;
+
+
         TestEndTurnAction += BeginEnemyTurn;
         TestCombineCardAction += OnCombineCardsButtonPress;
     }
@@ -36,13 +50,15 @@ public class CombatHandler : MonoBehaviour
     public void StartCombatEncounter(BaseEnemy enemy, PlayerHand hand, ComboCardCreator comboMaker)
     {
         _playerHand = hand;
-        hand.InitDebugStuff();
+        _playerHand.AttachMethodToEvent(HandleCardEffectPropagation);
+        _playerHand.InitDebugStuff();
 
         _currentCombatTarget = enemy;
         enemy.InitialiseThingForCombat(100.0f);
         enemy.CombatAI.inCombat = true;
-        var temp = Root.GetComponentFromRoot<UIHandler>().CurrentActivePanel.GetComponent<EnemyUIPanel>();
-        //temp.UpdateEnemyHealth((int)enemy.CharacterHealth);
+        Debug.Log(enemy.CharacterHealth.ToString());
+        var temp = Root.GetComponentFromRoot<UIHandler>().CurrentActivePanel.GetComponentInChildren<EnemyUIPanel>();
+        temp.InitPanel(enemy);
         
 
         _cardCreator = comboMaker;
@@ -88,7 +104,10 @@ public class CombatHandler : MonoBehaviour
     }
 
     private void PlayerEndTurn()
-    {
+    {// TODO: add card effect checking
+
+        HandleAnyCardEffectsInPlay(CardPotentialState.OnEndTurn);
+
         _isPlayerTurn = false;
         PlayerDiscardHand();
         QuitCardCraftingPhase();
@@ -99,6 +118,7 @@ public class CombatHandler : MonoBehaviour
     private void PlayerDrawCard(PlayerHand hand)
     {
         hand.DrawCardFromDeck();
+        HandleAnyCardEffectsInPlay(CardPotentialState.OnDraw);
     }
 
     private void PlayerDiscardCard(PlayerHand hand, Card card)
@@ -156,31 +176,116 @@ public class CombatHandler : MonoBehaviour
         }
     }
 
-    public void HandleCardEffectPropagation(BaseCardEffect.EffectData effect)
+    public void HandleCardEffectPropagation(Card card)
     {
-        // handle updating of card effects here?
-        // send event invocations out that will attach to baseenemy/playerchar
-        // combat handler WILL handle attached effects after every turn / start of a player turn.
-        Debug.Log("Combat Handler recieved new Card Effect." +
-            " Recieved: " + effect.Effect.EffectName + "\n" +
-            "Effect Target = " + effect.Target + "\n" +
-            "Effect on health = " + effect.Effect.EffectOnHealth + "\n" +
-            "Effect Duration Num of Turns = " + effect.Effect.EffectDuration);
+        var currentCardEffect = card.CardInfo.CardAttributes.DefaultCardEffect;
+        /*Debug.Log("test propagate");
+        Debug.Log("name = " + currentCardEffect.CardEffectDefaults.EffectName + 
+            " duration = " + currentCardEffect.CardEffectDefaults.EffectDuration + 
+            " health = " + currentCardEffect.CardEffectDefaults.EffectOnHealth);*/
+        
+        OnPlayerUseCard(card);
+    }
 
-        switch (effect.Target)
-        { // true = player false = enemy
-            // TODO should probs change this maybe
-            case true:
-                _playerChar.AttachedCardEffects.Add(effect.Effect);
+    // will probs use this as literal initial card usage, i.e player uses card and it immediately does its intended func.
+    // TODO: create 'cardeventhandler' class that will handle how to use the card effects rather than letting combat handler do it.
+    // all we would do is call eventhandler.OnUseCard(cardAttrib attrib) then return the result and attrib with edited values e.g. duration decrease.
+    // for end of turn etc, would use eventhandler.CheckAllEffects() which would return lsit of edited attribs and whatever occurs
+    private void OnPlayerUseCard(Card card)
+    {
+        var cardAttribs = card.CardInfo.CardAttributes;
+        var currentCardEffect = card.CardInfo.CardAttributes.DefaultCardEffect;
+        // TODO; change damage to a damage event
+        if (cardAttribs.BaseAttack > 0)
+        {
+            if (ChangeTargetHealth(GetTarget(currentCardEffect.EffectTarget), card.CardInfo.CardAttributes.BaseAttack) == 0)
+            {
+                Debug.Log("target health is zero.");
+            }
+        }
+
+        cardAttribs.DefaultCardEffect.OnActivateCardEffect();
+        _currentActiveCardEffects.Add(currentCardEffect, cardAttribs.DefaultCardEffect.CardEffectDefaults.EffectDuration);
+
+    }
+
+    private BaseCharacter GetTarget(CardPotentialTarget target)
+    {
+        BaseCharacter result = null;
+        switch (target)
+        {
+            case CardPotentialTarget.Debug:
                 break;
-            case false:
-                _currentCombatTarget.AttachedCardEffects.Add(effect.Effect);
+            case CardPotentialTarget.Enemy:
+                result = _currentCombatTarget;
+                break;
+            case CardPotentialTarget.Player:
+                //return _playerChar;// add basic ITargetable interface or something
                 break;
         }
+        return result;
     }
 
-    private void UpdateCardEffectsAttachedToChars()
+    private int ChangeTargetHealth(BaseCharacter target, int amount)
     {
+        // check if target dies here to skip extra stuff
+        var enemy = target as BaseEnemy;
+        enemy.CharacterHealth -= amount;
+        var temp = (EnemyUIPanel)GameObject.Find("EnemyUIPanel").GetComponent<EnemyUIPanel>();
+        temp.UpdateEnemyHealth((int)enemy.CharacterHealth);
 
+        if (enemy.CharacterHealth <= 0)
+        {
+            return 0;
+        }
+        return (int)enemy.CharacterHealth;
+    }
+
+    private void HandleAnyCardEffectsInPlay(CardPotentialState curState)
+    {
+        HandleCardEffectsWorker(curState);
+    }
+
+    private void HandleCardEffectsWorker(CardPotentialState curState)
+    {
+        if (_currentActiveCardEffects.Count > 0)
+        {// get effects by their 'intended' usage state
+            // would eventually move entire thing to event system so i could hook it up to 
+            // anims/fx etc and so it can be 'slowed' down
+            var tempEffects = _currentActiveCardEffects.Where(x => x.Key.EffectPreferredState == curState).ToList();
+
+            for(int i = 0; i < tempEffects.Count; i++)
+            {
+                var e = tempEffects[i].Key;
+                e.OnActivateCardEffect();
+                // would move code below to the effect itself, and it would simply invoke a method here instead
+                if(e.CardEffectDefaults.BaseCardEffect == CardEffectType.Debug)
+                {
+                    ChangeTargetHealth(GetTarget(e.EffectTarget), e.CardEffectDefaults.EffectOnHealth);
+                }
+                _currentActiveCardEffects[e]--;
+
+                if (_currentActiveCardEffects[e] <= 0)
+                {
+                    _currentActiveCardEffects.Remove(e);
+                }
+            }
+            
+            /*var tempList = new List<Card>();
+            for (int i = 0; i < _currentActiveCardEffects.Count; i++)
+            {
+                var effect = _currentActiveCardEffects.ElementAt(i);
+                var newEffectChange = effect.Key;
+                newEffectChange.OnActivateCardEffect();
+                _currentActiveCardEffects[effect.Key]--;
+
+                if (effect.Value <= 0)
+                {
+                    _currentActiveCardEffects.Remove(effect.Key);
+                }
+            }*/
+            //
+        }
     }
 }
+

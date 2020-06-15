@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "Things", menuName = "Things/CardAttributes")]
+///<summary>
+/// CardAttributes holds the 'in-game' data of a card
+/// </summary>
 public class CardAttributes : ScriptableObject
 {
     [Tooltip("The base damage value of the card.")]
@@ -13,13 +16,17 @@ public class CardAttributes : ScriptableObject
     [SerializeField]
     private int _baseCardCost;
 
-    [Tooltip("The target of the card. As bool, will either be player or enemy.")]
+    /* [Tooltip("The target of the card. As bool, will either be player or enemy.")]
+     [SerializeField]
+     private bool _cardTarget;
+     */
+    [Tooltip("The base effect that this card can afflict.")]
     [SerializeField]
-    private bool _cardTarget;
+    private BaseCardEffect _defaultCardEffect;
 
-    [Tooltip("The special effect that this card can afflict.")]
+    [Tooltip("Any extra effects that this card can afflict.")]
     [SerializeField]
-    private BaseCardEffect _baseEffect;
+    private List<BaseCardEffect> _baseExtraEffects;
 
     [Tooltip("The value ID that connects the attributes to the cards' main info.")]
     [SerializeField]
@@ -41,19 +48,26 @@ public class CardAttributes : ScriptableObject
         }
     }
 
-    public bool CardTarget
+    /*public bool CardTarget
     {
         get
         {
             return _cardTarget;
         }
-    }
-
-    public BaseCardEffect BaseEffect
+    }*/
+    public BaseCardEffect DefaultCardEffect
     {
         get
         {
-            return _baseEffect;
+            return _defaultCardEffect;
+        }
+    }
+
+    public List<BaseCardEffect> BaseExtraEffects
+    {
+        get
+        {
+            return _baseExtraEffects;
         }
     }
 
@@ -64,4 +78,6 @@ public class CardAttributes : ScriptableObject
             return _cardInfoID;
         }
     }
+
+    
 }
